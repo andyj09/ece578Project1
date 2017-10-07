@@ -285,6 +285,10 @@ void TimelineSlots::updateEachStation()
 				checkDIFSState(station);
 				break;
 			}
+			case STATION_STATE::BACKOFF_COUNTDOWN:
+			{
+				checkBackOffState(station);
+			}
 		}
 	}
 }
@@ -638,12 +642,28 @@ void TimelineSlots::checkIdleState(Station &station)
 {
 	if (station.getNextFrameArriveSlot() == getCurrentTimeSlot() )
 	{
-		station.setstate(DIFS_SENSING);
+		station.setState(DIFS_SENSING);
 		station.incrementStateCounter();
 	}
 }
 
 void TimelineSlots::checkDIFSState(Station &station)
 {
-	
+	// station has reached max DIFS time. Time to move to next state
+	if (station.getStateCounter() > this->getSlot().difsDuration)
+	{
+		station.setState(STATION_STATE::BACKOFF_COUNTDOWN);
+		station.resetStateCounter();
+	}
+	else
+	{
+		// keep incrementing until max DIFS time
+		station.incrementStateCounter();
+	}
+}
+
+void TimelineSlots::checkBackOffState(Station &station)
+{
+	// check if medium is busy
+
 }
