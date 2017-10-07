@@ -1,4 +1,4 @@
 *.[oa]
 *~
 *.swp
-/../../.vscode/
+.vscode/

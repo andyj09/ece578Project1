@@ -13,15 +13,20 @@
 #include <random>
 #include <deque>
 #include "Station.hpp"
+#include "utilities.hpp"
 
 using namespace std;
 // get base random alias which is auto seeded and has static API and internal state
 #include "include/effolkronium/random.hpp" // https://github.com/effolkronium/random
 using Random = effolkronium::random_static;
+struct debugInfo_t debugInfo;
 
-int main()
+int main(int argc, const char *argv[])
 {
 	cout << "HLVL: Start of Main " << endl;
+
+	getCLIArgs(argc, argv, debugInfo);
+
 	TimelineSlots &tmLineInst = TimelineSlots::getInstance();
 
 
