@@ -11,7 +11,7 @@
 #include <deque>
 #include <string>
 #include <vector>
-
+#include <queue>
 
 enum COLLISION_DMN{
 	INVALID,
@@ -23,6 +23,11 @@ enum COLLISION_DMN{
 enum TYPEOFS{
 	RECEIVER,
 	SENDER
+};
+
+enum STATION_STATE {
+	IDLE,
+	DIFS_SENSING
 };
 
 struct TxData
@@ -44,6 +49,9 @@ public:
 	TxData mTx;
 	std::vector<TxData> mGoodXmits;
 	std::deque<int> mFramesToXmit;
+	std::vector<double> poissonArrivlaTimes;
+	std::queue<int> trueSlotArrival;
+
 	Station(const COLLISION_DMN cD, const TYPEOFS tyP, const std::string &nM, const std::string &nTo);
 	void chooseBackOffTime(void);
 	void increaseBOSelectRange(void);
@@ -59,7 +67,12 @@ public:
 	void resetTxData(void);
 	const std::string& getSendingTo() const;
 	void setSendingTo(const std::string& sendingTo);
-
+	int getNextFrameArriveSlot();
+	void setState(STATION_STATE inState);
+	STATION_STATE getState();
+	int incrementStateCounter();
+	int getStateCounter();
+	void resetStateCounter();
 private:
 	COLLISION_DMN mCollisionDomain; //
 	TYPEOFS mTypeOfStation;   // Receiver ? Sender?
@@ -67,6 +80,8 @@ private:
 	int mBOSelectRng;
 	std::string mName;
 	std::string mSendingTo;
+	STATION_STATE state;
+	int stateCounter;
 };
 
 

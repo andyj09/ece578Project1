@@ -44,10 +44,10 @@ mTypeOfStation(tyP),
 mBackOffCountDown(std::numeric_limits<int>::min()),
 mBOSelectRng(BO::RANGE3),
 mName(nM),
-mSendingTo(nTo)
+mSendingTo(nTo),
+state(STATION_STATE::IDLE)
 {
-
-
+	std::cout << "Staion: " << mName << " created\n";
 }
 
 void Station::chooseBackOffTime(void)
@@ -200,4 +200,36 @@ void Station::resetTxData(void) {
 	this->mTx.iArrived 	= -1;
 	this->mTx.iBegin   	= -1;
 	this->mTx.iEnd		= -1;
+}
+
+int Station::getNextFrameArriveSlot()
+{
+	// TODO: add error checking if queue is empty
+	return poissonArrivlaTimes.front();
+}
+
+void Station::setState(STATION_STATE inState)
+{
+	this->state = inState;
+}
+
+STATION_STATE Station::getState()
+{
+	return this->state;
+}
+
+int Station::incrementStateCounter()
+{
+	this->stateCounter += 1;
+	return this->stateCounter;
+}
+
+int Station::getStateCounter()
+{
+	return this->stateCounter;
+}
+
+void Station::resetStateCounter()
+{
+	this->stateCounter = 0;
 }

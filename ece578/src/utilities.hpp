@@ -41,10 +41,10 @@ static bool getCLIArgs(int argc, const char *argv[], debugInfo_t &dInfo)
                 index += 1;
                 dInfo.fnameA = std::string(argv[index]);
             }
-            else if (arg == "-fnameB")
+            else if (arg == "-fnameC")
             {
                 index += 1;
-                dInfo.fnameB = std::string(argv[index]);
+                dInfo.fnameC = std::string(argv[index]);
             }
             else if (arg == "-config")
             {

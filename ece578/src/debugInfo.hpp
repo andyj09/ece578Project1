@@ -5,10 +5,10 @@
 
 struct debugInfo_t {
     std::string fnameA;
-    std::string fnameB;
+    std::string fnameC;
     std::string config;
     bool debugEnabled;
-    debugInfo_t() : fnameA(""),fnameB(""),config(""),debugEnabled(false) {};
+    debugInfo_t() : fnameA(""),fnameC(""),config(""),debugEnabled(false) {};
 };
 
 #endif // DEBUGINFO_HPP

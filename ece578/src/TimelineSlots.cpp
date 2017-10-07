@@ -6,11 +6,11 @@
  */
 #include "TimelineSlots.hpp"
 #include <iostream>
+#include <iomanip>
 #include <cmath>
 #include "INIReader.h"
 #include "debugInfo.hpp"
-#include "include/effolkronium/random.hpp" // https://github.com/effolkronium/random
-using Random = effolkronium::random_static;
+#include "probUtils.hpp"
 
 using namespace std;
 typedef std::vector<Station>::iterator VSI;
@@ -35,9 +35,14 @@ bool TimelineSlots::readConfig(std::string fname)
 		setSifsDuration(reader.GetReal("global","SIFS",minDobule));
 		setSlotDuration(reader.GetReal("global","slot",minDobule));
 		setTotalSimTime(reader.GetReal("global","sim_time",minDobule));
-		setMediumBandWidth(reader.GetReal("global","bandwitdth",minDobule));
-		setFrameXmitSzBits(reader.GetReal("global","data_frame_size",minInt)*8);
-		setAckRtsCtsSizeBits(reader.GetReal("global","ACK_size",minInt)*8);
+		setMediumBandWidth(reader.GetInteger("global","bandwitdth",minInt));
+		setFrameXmitSzBits(reader.GetInteger("global","data_frame_size",minInt)*8);
+		setAckRtsCtsSizeBits(reader.GetInteger("global","ACK_size",minInt)*8);
+
+		int lambda_A = reader.GetInteger("local","lambda_A", minInt);
+		int lambda_C = reader.GetInteger("local","lambda_C", minInt);
+		lambdaMap.insert(std::pair<std::string,int>("A", lambda_A));
+		lambdaMap.insert(std::pair<std::string,int>("C", lambda_C));
 
 		return 0;
 	}
@@ -174,16 +179,18 @@ void TimelineSlots::computeSlotUnits(void) {
 		this->slot.frameXmitt       = std::ceil(this->frameXmitSzBits/this->networkBandWidth / this->slotDuration);
 		this->slot.sifsDuration     = std::ceil(this->sifsDuration / this-> slotDuration);
 
-
-		std::cout	<< " HLVL this->slot.totalSim " 		<< this->slot.totalSim
-				  << "\n HLVL this->slot.ackRtcCtsSize " 	<< this->slot.ackRtsCtsSize
-				  << "\n HLVL this->slot.difsDuration " 	<< this->slot.difsDuration
-				  << "\n HLVL this->slot.frameXmitt " 		<< this->slot.frameXmitt
-				  << "\n HLVL this->slot.sifsDuration " 	<< this->slot.sifsDuration << std::endl;
+		if ( debugInfo.debugEnabled)
+		{
+			std::cout << "MSG: Total Sim Time:     " << this->slot.totalSim << std::endl;
+			std::cout << "MSG: ACK Size:           " << this->slot.ackRtsCtsSize << std::endl;
+			std::cout << "MSG: DIFS Duration       " << this->slot.difsDuration << std::endl;
+			std::cout << "MSG: Xmit Frame Duation: " << this->slot.frameXmitt << std::endl;
+			std::cout << "MSG: SIFS Duration:      " << this->slot.sifsDuration << std::endl;
+		}
 	}
 	else
 	{
-		std::cout << "HLVL: needed units have not been defined" << std::endl;
+		std::cout << "MSG: needed units have not been defined" << std::endl;
 	}
 }
 
@@ -260,6 +267,27 @@ void TimelineSlots::setSlot(const Slotted& slot) {
 
 // This function will iterate in states, will; return true if
 // we are passed the SimTime
+void TimelineSlots::updateEachStation()
+{
+	switch(this->currentState)
+	{
+		// iterate through every station and update each station's parameters
+		// based on the environment
+		for (auto &station : vStations )
+		{
+			switch(station.getState())
+			{
+				case STATION_STATE::IDLE:
+				{
+					checkIdleState(station);
+					break;
+				}
+			}
+		}
+	}
+}
+
+
 Status::State TimelineSlots::iterateToState(const Status::State e, const int& setCurTime) {
 	Status::State retVal = e;
 	this->mCurrentTimeSlot = setCurTime;
@@ -273,6 +301,10 @@ Status::State TimelineSlots::iterateToState(const Status::State e, const int& se
 
 	switch(this->currentState)
 	{
+		case Status::State::IDLE:
+		{
+			break;
+		}
 		case Status::State::DIFS:
 		{
 			for(int j=0; j< timeReqForState;j++,increaseTimeSlot())
@@ -368,7 +400,7 @@ Status::State TimelineSlots::iterateToState(const Status::State e, const int& se
 		}
 		case Status::State::ACK:
 		{
-//			cout << "ACK BEGIN " << this->mCurrentTimeSlot << endl;
+			//cout << "ACK BEGIN " << this->mCurrentTimeSlot << endl;
 			for(int j=0; j< timeReqForState;j++,increaseTimeSlot())
 			{
 				// Check If we can continue executing, SIM time boundary
@@ -379,7 +411,7 @@ Status::State TimelineSlots::iterateToState(const Status::State e, const int& se
 				}
 
 			}
-//			cout << "ACK END " << this->mCurrentTimeSlot << endl;
+			//cout << "ACK END " << this->mCurrentTimeSlot << endl;
 			if(this->vXmits.size() == 1)
 			{
 				// success, only one station was trying to transmit
@@ -399,8 +431,6 @@ Status::State TimelineSlots::iterateToState(const Status::State e, const int& se
 				{
 					cout << "HLVL: Error, There was a collision " << endl;
 				}
-
-
 			}
 			else
 			{
@@ -462,7 +492,7 @@ void TimelineSlots::setStations(const std::vector<Station>& stations) {
 		vStations = stations;
 		for(std::vector<Station>::iterator iT=vStations.begin() ; iT != vStations.end(); iT++)
 		{
-			printf("HLVL: Name of Station '%s'\n",(*iT).getName().c_str());
+			//printf("HLVL: Name of Station '%s'\n",(*iT).getName().c_str());
 
 			 std::pair<std::map<std::string,COLLISION_DMN>::iterator,bool> ret;
 
@@ -542,23 +572,73 @@ bool TimelineSlots::doBackOffPeriodStuff (void) {
 }
 
 void TimelineSlots::addProbOfArrival(void) {
-	for(VSI iT=this->vStations.begin();iT!=this->vStations.end();iT++)
+	//for(VSI iT=this->vStations.begin();iT!=this->vStations.end();iT++)
+	for (auto &station : vStations)
 	{
-		Station &cur = *iT;
-		if(cur.getTypeOfStation() == TYPEOFS::SENDER)
+		if(station.getTypeOfStation() == TYPEOFS::SENDER)
 		{
-			// TODO: The rate Packets/Second needs to be set on Statio initialization
-			if(Random::get<bool>(0.006)) // true with 0.6% probability aka '300';
+			// read arrival times from file
+			if (debugInfo.debugEnabled)
 			{
-				Station &curS = *iT;
-				curS.mFramesToXmit.push_back(this->mCurrentTimeSlot);
-				printf("Arrived packet on Station '%s' in TimeSlot '%d'\n",curS.getName().c_str(),this->mCurrentTimeSlot);	//std::cout << "Added to queue in slot i=" << i << endl;
+				if ( station.getName() == "A")
+					readArrivalTimesFromFile(station.poissonArrivlaTimes, debugInfo.fnameA);
+				else if (station.getName() == "C")
+					readArrivalTimesFromFile(station.poissonArrivlaTimes, debugInfo.fnameC);
 			}
+			else
+			{
+				// generate arrival times
+				genPoissonDistTraffic(station.poissonArrivlaTimes,lambdaMap[station.getName()], this->totalSimTime );
+			}
+
+			// regardless of how arrival times were computed, now it is time to
+			// generate the all arrival slots
+			generateTrueArrivalSlots(station);
 		}
 
 	}
 }
 
+bool TimelineSlots::readArrivalTimesFromFile(std::vector<double> &outVec, std::string fname)
+{
+	readValuesFromFile(outVec, fname);
+	return true;
+}
+
+void TimelineSlots::generateTrueArrivalSlots(Station &station)
+{
+	double totalSum = 0.0;
+	double dSlot = 0.0;
+	int slot;
+	if (debugInfo.debugEnabled)
+	{
+		std::cout << "Station: " << station.getName() << std::endl;
+	}
+	for (const auto &aTime : station.poissonArrivlaTimes)
+	{
+		totalSum += aTime;
+		dSlot = totalSum / this->slotDuration;
+		slot = std::ceil(dSlot);
+		station.trueSlotArrival.push(slot);
+		if (debugInfo.debugEnabled)
+		{
+			std::cout << "Acutal Arrival Slot: " << std::setprecision(9);
+			std::cout << totalSum << " slot: " << std::setprecision(9) << slot;
+			std::cout << std::endl;
+		}	
+	}
+}
 void TimelineSlots::setCurrentTimeSlot(int currentTimeSlot) {
 	this->mCurrentTimeSlot = currentTimeSlot;
+}
+
+void TimelineSlots::checkIdleState(Station &station)
+{
+	/*
+	if (station.getNextFrameArriveSlot() == getCurrentTimeSlot() )
+	{
+		station.setstate(DIFS_SENSING);
+		station.incrementStateCounter();
+	}
+	*/
 }

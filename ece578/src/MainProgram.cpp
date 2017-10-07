@@ -16,14 +16,10 @@
 #include "utilities.hpp"
 
 using namespace std;
-// get base random alias which is auto seeded and has static API and internal state
-#include "include/effolkronium/random.hpp" // https://github.com/effolkronium/random
-using Random = effolkronium::random_static;
 struct debugInfo_t debugInfo;
 
 int main(int argc, const char *argv[])
 {
-	cout << "HLVL: Start of Main " << endl;
 	TimelineSlots &tmLineInst = TimelineSlots::getInstance();
 
 	// read command line arguments
@@ -38,26 +34,44 @@ int main(int argc, const char *argv[])
 		return 0;
 	}
 	
+	// compute dynamic timeline parameters
 	tmLineInst.computeSlotUnits();
-
+   
+	// create All required stations
 	Station A(COLLISION_DMN::ONE,TYPEOFS::SENDER,"A","B");
 	Station B(COLLISION_DMN::ONE,TYPEOFS::RECEIVER,"B","");
 	Station C(COLLISION_DMN::ONE,TYPEOFS::SENDER,"C","D");
 	Station D(COLLISION_DMN::ONE,TYPEOFS::RECEIVER,"D","");
 
+	// add all station to a list
 	std::vector<Station> vectStations {A,B,C,D};
 	tmLineInst.setStations(vectStations);
 
+	// populate arrival times
+	tmLineInst.addProbOfArrival();
 
+	// set the starting state
 	Status::State curStatus = Status::State::DIFS;
 	tmLineInst.setCurrentTimeSlot(0);
-	tmLineInst.addProbOfArrival();
-	curStatus = tmLineInst.iterateToState(curStatus,0);
 
-	if(curStatus == Status::State::ENDOFSIM)
+	/*
+		All simulation parameters have been setup by this point.
+		This is main simulation loop. Simply loop over all possible slots and
+		update the simulation world on every slot.
+	*/
+	int currentSlot = tmLineInst.getCurrentTimeSlot();
+	int counter = 0;
+	while (currentSlot < tmLineInst.getSlot().totalSim)
 	{
-		printf("Terminated at i='%d'\n",tmLineInst.getCurrentTimeSlot());
+		tmLineInst.updateEachStation();
 	}
+
+//	curStatus = tmLineInst.iterateToState(curStatus,0);
+
+//	if(curStatus == Status::State::ENDOFSIM)
+//	{
+//		printf("Terminated at i='%d'\n",tmLineInst.getCurrentTimeSlot());
+//	}
 
 	return 0;
 

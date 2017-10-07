@@ -92,6 +92,16 @@ public:
 	void doCommonStuff(void);
 	bool doBackOffPeriodStuff(void);
 	void addProbOfArrival(void);
+	bool readArrivalTimesFromFile(std::vector<double> &outVec, std::string);
+	void generateTrueArrivalSlots(Station &station);
+	void updateEachStation();
+	void checkIdleState(Station &station);
+	void checkDIFSState(Station &station);
+	void checkBackOffState(Station &station);
+	void checkXmitDataState(Station &station);
+	void checkSIFSState(Station &station);
+	void checkACKStation(Station &station);
+	
 
 	// assignment ctor
 	// Note: Scott Meyers mentions in his Effective Modern
@@ -129,6 +139,7 @@ private:
 	Slotted slot;
 	std::vector<Station> vStations;
 	std::vector<Station *> vXmits;
+	std::map<std::string, int> lambdaMap;
 	int numStationsToXmit;
 	TxData lastXmit;
 	std::map<std::string,COLLISION_DMN> mMapStations;
