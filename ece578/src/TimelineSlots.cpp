@@ -677,4 +677,9 @@ void TimelineSlots::checkBackOffState(Station &station)
 			// generate random back off time
 		}
 	}
+	// station is either counting down or is paused due to busy medium
+	else
+	{
+
+	}
 }
