@@ -269,19 +269,21 @@ void TimelineSlots::setSlot(const Slotted& slot) {
 // we are passed the SimTime
 void TimelineSlots::updateEachStation()
 {
-	switch(this->currentState)
+	// iterate through every station and update each station's parameters
+	// based on the environment
+	for (auto &station : vStations )
 	{
-		// iterate through every station and update each station's parameters
-		// based on the environment
-		for (auto &station : vStations )
+		switch(station.getState())
 		{
-			switch(station.getState())
+			case STATION_STATE::IDLE:
 			{
-				case STATION_STATE::IDLE:
-				{
-					checkIdleState(station);
-					break;
-				}
+				checkIdleState(station);
+				break;
+			}
+			case STATION_STATE::DIFS_SENSING:
+			{
+				checkDIFSState(station);
+				break;
 			}
 		}
 	}
@@ -634,11 +636,14 @@ void TimelineSlots::setCurrentTimeSlot(int currentTimeSlot) {
 
 void TimelineSlots::checkIdleState(Station &station)
 {
-	/*
 	if (station.getNextFrameArriveSlot() == getCurrentTimeSlot() )
 	{
 		station.setstate(DIFS_SENSING);
 		station.incrementStateCounter();
 	}
-	*/
+}
+
+void TimelineSlots::checkDIFSState(Station &station)
+{
+	
 }
