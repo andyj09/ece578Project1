@@ -1,15 +1,18 @@
+#ifndef UTILITIES_HPP
+#define UTILITIES_HPP
+
+#include "debugInfo.hpp"
 #include <iostream>
+#include <string>
 
-struct debugInfo_t {
-    std::string fnameA;
-    std::string fnameB;
-    bool enabled;
-    debugInfo_t() : fnameA(""),fnameB(""), enabled(false) {};
-};
-
-bool getCLIArgs(int argc, const char *argv[], debugInfo_t &dInfo)
+static bool getCLIArgs(int argc, const char *argv[], debugInfo_t &dInfo)
 {
-    // do nothing if no arguments are passed in
+    if ( argc == 1)
+    {
+        std::cout << "ERROR: must pass at least one argument\n";
+        return false;
+    }
+    // two arguments -h or config file
     if ( argc == 2)
     {
         std::string arg = argv[1];
@@ -18,8 +21,13 @@ bool getCLIArgs(int argc, const char *argv[], debugInfo_t &dInfo)
             std::cout << "usage: " << argv[0] << " [ -debug ";
             std::cout << "[fnameA filename] "; 
             std::cout << "[fnameB filename] ]" << std::endl;
+            return false;
         }
-        return false;
+        else if (arg == "-config")
+        {
+            dInfo.config = std::string(argv[1]);
+            return true;
+        }
     }
     else
     {
@@ -38,9 +46,14 @@ bool getCLIArgs(int argc, const char *argv[], debugInfo_t &dInfo)
                 index += 1;
                 dInfo.fnameB = std::string(argv[index]);
             }
-            else if (arg == "-d")
+            else if (arg == "-config")
             {
-                dInfo.enabled = true;
+                index += 1;
+                dInfo.config = std::string(argv[index]);
+            }
+            else if (arg == "-debug")
+            {
+                dInfo.debugEnabled = true;
             }
             else {
                 std::cout << "invalid argument, use -h for help\n";
@@ -51,3 +64,5 @@ bool getCLIArgs(int argc, const char *argv[], debugInfo_t &dInfo)
     }
     return true;
 }
+
+#endif // UTILITIES_HPP

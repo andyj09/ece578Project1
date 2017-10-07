@@ -7,12 +7,41 @@
 #include "TimelineSlots.hpp"
 #include <iostream>
 #include <cmath>
-
+#include "INIReader.h"
+#include "debugInfo.hpp"
 #include "include/effolkronium/random.hpp" // https://github.com/effolkronium/random
 using Random = effolkronium::random_static;
 
 using namespace std;
 typedef std::vector<Station>::iterator VSI;
+extern debugInfo_t debugInfo;
+
+bool TimelineSlots::readConfig(std::string fname)
+{
+	INIReader reader(fname);
+	
+	if (reader.ParseError() < 0)
+	{
+		if ( debugInfo.debugEnabled )
+			std::cout << "Error: Cannot load " << fname << std::endl;
+		return 1;
+	}
+	else
+	{
+		double minDobule = std::numeric_limits<double>::min();
+		int minInt = std::numeric_limits<int>::min();
+		//reader.Get("protocol","version","UNKNOWN") <<"\n";
+		setDifsDuration(reader.GetReal("global","DIFS",minDobule));
+		setSifsDuration(reader.GetReal("global","SIFS",minDobule));
+		setSlotDuration(reader.GetReal("global","slot",minDobule));
+		setTotalSimTime(reader.GetReal("global","sim_time",minDobule));
+		setMediumBandWidth(reader.GetReal("global","bandwitdth",minDobule));
+		setFrameXmitSzBits(reader.GetReal("global","data_frame_size",minInt)*8);
+		setAckRtsCtsSizeBits(reader.GetReal("global","ACK_size",minInt)*8);
+
+		return 0;
+	}
+}
 
 
 // Increase the time Slot counter and return the current time slot

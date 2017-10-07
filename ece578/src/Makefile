@@ -1,7 +1,7 @@
 # Project1
 CC=g++
 CFLAGS=-std=c++11 -c -Wall
-#LDFLAGS=
+LDFLAGS=-W1,-v
 INCLUDES=-Iinclude
 # Note the order of source files
 SOURCES=MainProgram.cpp Station.cpp TimelineSlots.cpp
@@ -15,7 +15,7 @@ all: $(SOURCES) $(EXECUTABLE)
 
 # Note the position of LDFLAGS    
 $(EXECUTABLE): $(OBJECTS) 
-	$(CC) $(OBJECTS) $(LDFLAGS) $(INCLUDES) -o $@
+	$(CC) -v $(OBJECTS) $(LDFLAGS) $(INCLUDES) -o $@
 
 # Double-suffix .cpp.o is equivalent to %.o: %.cpp
 # .cpp is the first prerequisite and .o is the target

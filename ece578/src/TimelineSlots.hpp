@@ -51,6 +51,7 @@ public:
 		return instance;
 	}
 
+	bool readConfig(std::string fname);
 	int increaseTimeSlot(void);
 
 

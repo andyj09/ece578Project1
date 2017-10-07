@@ -24,28 +24,27 @@ struct debugInfo_t debugInfo;
 int main(int argc, const char *argv[])
 {
 	cout << "HLVL: Start of Main " << endl;
-
-	getCLIArgs(argc, argv, debugInfo);
-
 	TimelineSlots &tmLineInst = TimelineSlots::getInstance();
 
+	// read command line arguments
+	if (!getCLIArgs(argc, argv, debugInfo))
+	{
+		return 0;
+	}
 
-	// Delete This
-	double deletemeLater  = 0.000020 * 500;
-	// TODO: read parameters from .ini/.conf file
-	tmLineInst.setDifsDuration(0.000040); 	// DIFS Duration 40 uS ~= 2 Slots
-	tmLineInst.setSifsDuration(0.000010); 	// SIFS Duration 10 uS ~= 1 Slot
-	tmLineInst.setSlotDuration(0.000020);		// Slot Duration 20 uS
-	tmLineInst.setTotalSimTime(deletemeLater); 			// Simulation time 10 S  ~= 500,000 Slots
-	tmLineInst.setMediumBandWidth(6000000); 	// Transmission rate 6 Mbps
-	tmLineInst.setFrameXmitSzBits(1500*8);   	// It takes 250 uS to xmit a frame  ~= 13 Slots
-	tmLineInst.setAckRtsCtsSizeBits(8*30); 	// ACK, RTS, CTS size = 30 bytes ~= 5 uS ~= 1 Slot
+	// read config file
+	if (tmLineInst.readConfig(debugInfo.config))
+	{
+		return 0;
+	}
+	
 	tmLineInst.computeSlotUnits();
 
 	Station A(COLLISION_DMN::ONE,TYPEOFS::SENDER,"A","B");
 	Station B(COLLISION_DMN::ONE,TYPEOFS::RECEIVER,"B","");
 	Station C(COLLISION_DMN::ONE,TYPEOFS::SENDER,"C","D");
 	Station D(COLLISION_DMN::ONE,TYPEOFS::RECEIVER,"D","");
+
 	std::vector<Station> vectStations {A,B,C,D};
 	tmLineInst.setStations(vectStations);
 
