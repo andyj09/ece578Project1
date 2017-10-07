@@ -30,3 +30,6 @@ Username: <type your username>
 Password: <type your password>
 Also I suggest you to read
 $ git help credentials
+
+Run program in debug mode:
+./project1.o -debug -fnameA arrival_times/stationA_lambda50_100msec.txt -fnameC arrival_times/stationC_lambda50_100msec.txt -config test.ini
