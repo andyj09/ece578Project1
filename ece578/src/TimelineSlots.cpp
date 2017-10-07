@@ -664,6 +664,17 @@ void TimelineSlots::checkDIFSState(Station &station)
 
 void TimelineSlots::checkBackOffState(Station &station)
 {
-	// check if medium is busy
+	// station will generate a random back off time once entering this state
+	if (station.getStateCounter == 0)
+	{
+		// read param from file
+		if (debugInfo.debugEnabled)
+		{
 
+		}
+		else
+		{
+			// generate random back off time
+		}
+	}
 }
